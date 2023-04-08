@@ -1,0 +1,4 @@
+name = "XXHash3"
+uuid = "03011c58-971c-47fb-a8a6-236b93bcc604"
+authors = ["TEC <git@tecosaur.net>"]
+version = "0.1.0"
