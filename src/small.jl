@@ -9,7 +9,6 @@ function hash0_128b(secret::AbstractVector{UInt8}, seed::UInt64)
 end
 
 function hash1to3_128b(input::AbstractVector{UInt8}, secret::AbstractVector{UInt8}, seed::UInt64)
-    @boundscheck checkbounds(1:3, length(input))
     byte1 = input[1] |> UInt32
     byte2 = input[1 + length(input) >> 1] |> UInt32
     byte3 = input[length(input)] |> UInt32
@@ -24,7 +23,6 @@ function hash1to3_128b(input::AbstractVector{UInt8}, secret::AbstractVector{UInt
 end
 
 function hash4to8_128b(input::AbstractVector{UInt8}, secret::AbstractVector{UInt8}, seed::UInt64)
-    @boundscheck checkbounds(4:8, length(input))
     seed ⊻= UInt64(bswap(seed % UInt32)) << 32
     input_low = grab(UInt32, input)
     input_high = grab(UInt32, input, 1, length(input) - sizeof(UInt32))
@@ -42,7 +40,6 @@ function hash4to8_128b(input::AbstractVector{UInt8}, secret::AbstractVector{UInt
 end
 
 function hash9to16_128b(input::AbstractVector{UInt8}, secret::AbstractVector{UInt8}, seed::UInt64)
-    @boundscheck checkbounds(9:16, length(input))
     bitflip_low = grab(UInt64, secret, 5) ⊻ grab(UInt64, secret, 6)
     bitflip_high = grab(UInt64, secret, 7) ⊻ grab(UInt64, secret, 8)
     input_low = grab(UInt64, input)
@@ -59,8 +56,7 @@ function hash9to16_128b(input::AbstractVector{UInt8}, secret::AbstractVector{UIn
 end
 
 function hash0to16_128b(input::AbstractVector{UInt8}, secret::AbstractVector{UInt8}, seed::UInt64)
-    @boundscheck checkbounds(0:16, length(input))
-    @inbounds if length(input) >= 9
+    if length(input) >= 9
         hash9to16_128b(input, secret, seed)
     elseif length(input) >= 4
         hash4to8_128b(input, secret, seed)
@@ -72,7 +68,6 @@ function hash0to16_128b(input::AbstractVector{UInt8}, secret::AbstractVector{UIn
 end
 
 function hash17to128_128b(input::AbstractVector{UInt8}, secret::AbstractVector{UInt8}, seed::UInt64)
-    @boundscheck checkbounds(17:128, length(input))
     high = zero(UInt64)
     low = length(input) * PRIME64_1
     if length(input) > 96
@@ -100,7 +95,6 @@ end
 function hash129to240_128b(input::AbstractVector{UInt8}, secret::AbstractVector{UInt8}, seed::UInt64)
     midsize_start_offset = 3
     midsize_last_offset = 17
-    @boundscheck checkbounds(129:240, length(input))
     high = zero(UInt64)
     low = length(input) * PRIME64_1
     for i in 32:32:128

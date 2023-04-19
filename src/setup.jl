@@ -1,6 +1,6 @@
-const STRIPE_LENGTH = 64
+const STRIPE_LENGTH = 8 # UInt64s not UInt8s
 const SECRET_CONSUME_RATE = 8
-const ACCUMULATOR_LANES = 8 # STRIPE_LENGTH ÷ sizeof(UInt64)
+const ACCUMULATOR_LANES = 8
 
 const PRIME32_1 = 0x9E3779B1            # 0b10011110001101110111100110110001
 const PRIME32_2 = 0x85EBCA77            # 0b10000101111010111100101001110111
@@ -23,13 +23,15 @@ Accumulator() = Accumulator(
     (UInt64(PRIME32_3), PRIME64_1, PRIME64_2, PRIME64_3,
      PRIME64_4, UInt64(PRIME32_2), PRIME64_5, UInt64(PRIME32_1)))
 
-Base.getindex(acc::Accumulator, i::Int) =
-    GC.@preserve acc unsafe_load(Base.unsafe_convert(
-        Ptr{UInt64}, pointer_from_objref(acc)), i)
+Base.@propagate_inbounds function Base.getindex(acc::Accumulator, i::Int)
+    @boundscheck checkbounds(1:ACCUMULATOR_LANES, i)
+    @inbounds acc.data[i]
+end
 
-Base.setindex!(acc::Accumulator, val::UInt64, i::Int) =
-    GC.@preserve acc unsafe_store!(Base.unsafe_convert(
-        Ptr{UInt64}, pointer_from_objref(acc)), val, i)
+Base.@propagate_inbounds function Base.setindex!(acc::Accumulator, val::UInt64, i::Int)
+    @boundscheck checkbounds(1:ACCUMULATOR_LANES, i)
+    @inbounds acc.data = Base.setindex(acc.data, val, i)
+end
 
 """
     grab(T::Type{<:Unsigned}, bytes::Vector{UInt8}, index::Int=1, offset::Int=0)
